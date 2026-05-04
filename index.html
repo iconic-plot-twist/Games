@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Team Vibes 🎉</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0E17;--surface:#1A1826;--surface2:#221F33;--border:#2E2B42;
+  --text:#FFFFFE;--muted:#A89FC0;
+  --hot:#FF6B6B;--hot-dim:#3D1F1F;
+  --green:#06D6A0;--green-dim:#0A2E26;
+  --purple:#7B5EA7;--pb:#A78BFA;--pd:#1E1730;
+  --yellow:#FFD166;--yd:#2E2510;
+  --pink:#FF79C6;--r:18px;--rsm:10px;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1.5rem 1rem 4rem;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(123,94,167,.18) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(255,107,107,.12) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 60% 10%,rgba(6,214,160,.08) 0%,transparent 60%);pointer-events:none;z-index:0}
+.app{width:100%;max-width:460px;position:relative;z-index:1}
+.logo{text-align:center;margin-bottom:2rem;padding-top:.5rem}
+.logo-text{font-size:32px;font-weight:900;background:linear-gradient(135deg,var(--yellow),var(--hot),var(--pb));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.02em;line-height:1}
+.logo-sub{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.12em;margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:1rem}
+.card-title{font-size:20px;font-weight:800;margin-bottom:.3rem}
+.card-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:1.25rem}
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:99px;margin-bottom:1rem}
+.badge-hot{background:var(--hot-dim);color:var(--hot);border:1px solid var(--hot)}
+.badge-taboo{background:var(--pd);color:var(--pb);border:1px solid var(--pb)}
+.badge-host{background:var(--yd);color:var(--yellow);border:1px solid var(--yellow)}
+.badge-player{background:var(--green-dim);color:var(--green);border:1px solid var(--green)}
+.badge-edit{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+input[type="text"],textarea{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--rsm);font-family:inherit;font-size:15px;background:var(--surface2);color:var(--text);outline:none;transition:border .2s;margin-bottom:.75rem}
+input[type="text"]:focus,textarea:focus{border-color:var(--pb)}
+input[type="text"]::placeholder,textarea::placeholder{color:var(--muted)}
+textarea{resize:vertical;line-height:1.7;font-size:13px}
+button{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border-radius:var(--rsm);padding:.7rem 1.25rem;border:none;transition:transform .1s,filter .15s}
+button:active{transform:scale(.96)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--purple),var(--pb));color:#fff;width:100%;padding:.9rem;font-size:16px;box-shadow:0 4px 20px rgba(123,94,167,.4)}
+.btn-primary:hover:not(:disabled){filter:brightness(1.1)}
+.btn-hot{background:linear-gradient(135deg,#FF4757,var(--hot));color:#fff;width:100%;padding:.9rem;font-size:16px;box-shadow:0 4px 20px rgba(255,107,107,.35)}
+.btn-green{background:linear-gradient(135deg,#00B894,var(--green));color:#000;width:100%;padding:.9rem;font-size:16px;font-weight:800;box-shadow:0 4px 20px rgba(6,214,160,.35)}
+.btn-yellow{background:linear-gradient(135deg,#F9A825,var(--yellow));color:#000;width:100%;padding:.9rem;font-size:16px;font-weight:800;box-shadow:0 4px 20px rgba(255,209,102,.3)}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);padding:.7rem 1rem}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-row{display:flex;gap:8px}
+.btn-row button{flex:1}
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.player-chips{display:flex;flex-wrap:wrap;gap:8px;margin:1rem 0;min-height:36px}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.chip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0}
+.chip.host-chip{background:var(--yd);border-color:var(--yellow);color:var(--yellow)}
+.chip.host-chip::before{background:var(--yellow)}
+.room-code-box{background:var(--surface2);border:1.5px dashed var(--pb);border-radius:var(--rsm);padding:1.25rem;text-align:center;margin-bottom:1rem}
+.room-code{font-family:'Space Mono',monospace;font-size:34px;font-weight:700;letter-spacing:.18em;color:var(--yellow);text-shadow:0 0 20px rgba(255,209,102,.4)}
+.room-code-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.copy-hint{font-size:11px;color:var(--muted);margin-top:6px;font-family:'Space Mono',monospace}
+.progress-row{display:flex;gap:5px;margin-bottom:1.25rem}
+.pip{height:6px;flex:1;border-radius:99px;background:var(--border);transition:background .3s}
+.pip.done{background:var(--pb)}
+.pip.active{background:var(--yellow)}
+.statement{font-size:22px;font-weight:800;line-height:1.35;margin:.5rem 0 1.5rem;background:linear-gradient(135deg,#FFFFFE,rgba(255,255,255,.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.vote-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.vote-btn{padding:1.5rem .5rem;border-radius:var(--rsm);font-size:26px;border:2px solid var(--border);background:var(--surface2);transition:border-color .2s,background .2s,transform .1s;width:100%;cursor:pointer}
+.vote-btn span{font-size:13px;font-weight:700;display:block;margin-top:6px;font-family:'Outfit',sans-serif;color:var(--muted)}
+.vote-btn:hover:not(:disabled){transform:scale(1.03)}
+.vote-btn.selected-agree{border-color:var(--green);background:var(--green-dim)}
+.vote-btn.selected-agree span{color:var(--green)}
+.vote-btn.selected-disagree{border-color:var(--hot);background:var(--hot-dim)}
+.vote-btn.selected-disagree span{color:var(--hot)}
+.vote-btn:disabled{cursor:not-allowed;opacity:1}
+.wait-msg{text-align:center;font-size:14px;color:var(--muted);margin:.75rem 0;font-style:italic}
+.votes-waiting{text-align:center;font-size:13px;color:var(--muted);font-family:'Space Mono',monospace;margin:.5rem 0}
+.result-bars{margin:1rem 0}
+.result-row{display:flex;align-items:center;gap:10px;margin-bottom:.75rem}
+.result-emoji{font-size:18px;flex-shrink:0;width:28px;text-align:center}
+.bar-track{flex:1;height:14px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.bar-agree{background:linear-gradient(90deg,#00B894,var(--green))}
+.bar-dis{background:linear-gradient(90deg,#FF4757,var(--hot))}
+.result-count{font-size:15px;font-weight:800;width:28px;text-align:right;flex-shrink:0}
+.big-word{font-size:44px;font-weight:900;text-align:center;letter-spacing:-.03em;line-height:1.1;margin:.5rem 0 1.25rem;background:linear-gradient(135deg,var(--yellow),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.forbidden-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;justify-content:center}
+.forbidden-pill{background:var(--hot-dim);border:1px solid var(--hot);color:var(--hot);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:700;text-decoration:line-through;text-decoration-color:var(--hot)}
+.timer-wrap{margin:1rem 0 .5rem}
+.timer-track{height:10px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.timer-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--pb));transition:width 1s linear,background .5s}
+.timer-fill.warning{background:linear-gradient(90deg,#FF4757,var(--hot))}
+.timer-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:5px;font-family:'Space Mono',monospace}
+.guess-input-row{display:flex;gap:8px;margin-bottom:.75rem}
+.guess-input-row input{flex:1;margin:0}
+.guess-input-row button{flex-shrink:0;background:var(--pb);color:#fff;border-radius:var(--rsm);padding:0 1.1rem}
+.guesses-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}
+.guess-item{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--surface2);border-radius:var(--rsm);font-size:14px;border:1px solid var(--border)}
+.guess-item .gname{color:var(--muted);font-size:11px;font-family:'Space Mono',monospace}
+.guess-item.correct{background:var(--green-dim);border-color:var(--green)}
+.guess-item.correct .gword{color:var(--green);font-weight:700}
+.cluer-role-box{background:var(--yd);border:1px solid var(--yellow);border-radius:var(--rsm);padding:.75rem 1rem;font-size:13px;color:var(--yellow);font-weight:600;text-align:center;margin-bottom:1rem}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:1rem 0}
+.score-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:1rem;text-align:center}
+.score-num{font-size:36px;font-weight:900;line-height:1}
+.score-lbl{font-size:12px;color:var(--muted);margin-top:4px;font-family:'Space Mono',monospace}
+.player-scores{display:flex;flex-direction:column;gap:6px;margin:1rem 0}
+.ps-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:var(--rsm);font-size:14px;border:1px solid var(--border)}
+.ps-row.top{background:var(--yd);border-color:var(--yellow)}
+.ps-name{font-weight:700}
+.ps-pts{font-weight:800;color:var(--yellow);font-family:'Space Mono',monospace}
+.host-controls{border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem}
+.connection-status{position:fixed;bottom:1rem;right:1rem;font-size:11px;font-weight:700;padding:5px 12px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--muted);letter-spacing:.04em;font-family:'Space Mono',monospace;z-index:100}
+.connection-status.connected{color:var(--green);border-color:var(--green)}
+.connection-status.error{color:var(--hot);border-color:var(--hot)}
+.notification{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 20px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.notification.show{opacity:1}
+#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+.rules-list{display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem}
+.rule-item{display:flex;align-items:flex-start;gap:12px;font-size:14px;line-height:1.5}
+.rule-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px}
+.rule-hot{background:var(--hot-dim);color:var(--hot);border:1px solid var(--hot)}
+.rule-tab{background:var(--pd);color:var(--pb);border:1px solid var(--pb)}
+@media(max-width:380px){.big-word{font-size:34px}.statement{font-size:18px}.logo-text{font-size:26px}}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<div class="app">
+
+<div class="logo">
+  <div class="logo-text">Team Vibes 🎉</div>
+  <div class="logo-sub">Hot Takes + Taboo &mdash; everyone plays on their phone</div>
+</div>
+
+<!-- JOIN -->
+<div class="screen active" id="s-join">
+  <div class="card">
+    <div class="card-title">Ready to play?</div>
+    <div class="card-sub">Enter your name, then create a room or join one with a code. Everyone opens this same link!</div>
+    <input type="text" id="name-input" placeholder="Your name" maxlength="20"/>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="createRoom()">Create room</button>
+      <button class="btn-ghost" onclick="showJoinField()">Join room</button>
+    </div>
+    <div id="join-field" style="display:none;margin-top:.75rem">
+      <input type="text" id="code-input" placeholder="ROOM CODE" maxlength="6" style="text-transform:uppercase;letter-spacing:.12em;font-family:'Space Mono',monospace;font-size:20px;text-align:center"/>
+      <button class="btn-yellow" onclick="joinRoom()">Join game</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:.75rem;font-family:'Space Mono',monospace">HOW IT WORKS</div>
+    <div class="rules-list">
+      <div class="rule-item"><div class="rule-num rule-hot">1</div><div><strong>Hot Takes</strong> — a statement pops up. Everyone votes agree or disagree on their own phone, then the host reveals the results.</div></div>
+      <div class="rule-item"><div class="rule-num rule-tab">2</div><div><strong>Taboo</strong> — one person gives clues for a secret word without saying the forbidden words. Everyone else guesses on their screen!</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY HOST -->
+<div class="screen" id="s-lobby-host">
+  <div class="card">
+    <div class="badge badge-host">You're the host ✨</div>
+    <div class="room-code-box">
+      <div class="room-code-label">Share this code with your team</div>
+      <div class="room-code" id="display-code">——</div>
+      <div class="copy-hint">Everyone goes to the same link &amp; types this code</div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;font-family:'Space Mono',monospace">PLAYERS IN ROOM</div>
+    <div class="player-chips" id="host-player-list"></div>
+    <button class="btn-primary" id="start-btn" onclick="startGame()" disabled style="margin-bottom:8px">Waiting for players…</button>
+    <button class="btn-ghost" onclick="openEdit()" style="width:100%;font-size:13px">Edit questions &amp; words ✏️</button>
+  </div>
+</div>
+
+<!-- LOBBY PLAYER -->
+<div class="screen" id="s-lobby-player">
+  <div class="card">
+    <div class="badge badge-player">You're in! 🎉</div>
+    <div class="card-title" id="player-room-title">Waiting…</div>
+    <div class="card-sub">The host will start the game soon. Hang tight!</div>
+    <div class="player-chips" id="player-player-list"></div>
+  </div>
+</div>
+
+<!-- HOT TAKE PLAYER -->
+<div class="screen" id="s-hot-player">
+  <div class="progress-row" id="hot-progress-player"></div>
+  <div class="card">
+    <div class="badge badge-hot">🔥 Hot take</div>
+    <div class="statement" id="hot-statement-player"></div>
+    <div class="vote-grid">
+      <button class="vote-btn" id="vote-agree-btn" onclick="castVote('agree')">👍<span>Agree</span></button>
+      <button class="vote-btn" id="vote-dis-btn" onclick="castVote('disagree')">👎<span>Disagree</span></button>
+    </div>
+    <div class="wait-msg" id="hot-wait-msg" style="display:none">Locked in! Waiting for host to reveal… 🕐</div>
+  </div>
+</div>
+
+<!-- HOT TAKE HOST -->
+<div class="screen" id="s-hot-host">
+  <div class="progress-row" id="hot-progress-host"></div>
+  <div class="card">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem">
+      <div class="badge badge-host" style="margin-bottom:0">Host</div>
+      <div class="badge badge-hot" style="margin-bottom:0">🔥 Hot take</div>
+    </div>
+    <div class="statement" id="hot-statement-host"></div>
+    <div class="votes-waiting" id="hot-votes-count">Waiting for votes…</div>
+    <div id="hot-results-host" style="display:none">
+      <div class="result-bars">
+        <div class="result-row">
+          <div class="result-emoji">👍</div>
+          <div class="bar-track"><div class="bar-fill bar-agree" id="bar-agree" style="width:0%"></div></div>
+          <div class="result-count" style="color:var(--green)" id="cnt-agree">0</div>
+        </div>
+        <div class="result-row">
+          <div class="result-emoji">👎</div>
+          <div class="bar-track"><div class="bar-fill bar-dis" id="bar-dis" style="width:0%"></div></div>
+          <div class="result-count" style="color:var(--hot)" id="cnt-dis">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="host-controls">
+      <div class="btn-row">
+        <button class="btn-hot" id="reveal-votes-btn" onclick="revealVotes()">Reveal votes 👀</button>
+        <button class="btn-primary" id="next-take-btn" onclick="nextTake()" style="display:none">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABOO CLUER -->
+<div class="screen" id="s-taboo-cluer">
+  <div class="progress-row" id="tab-progress-cluer"></div>
+  <div class="card">
+    <div class="badge badge-taboo">🎭 Your turn to give clues!</div>
+    <div class="cluer-role-box">Everyone else is guessing — don't say these words!</div>
+    <div class="big-word" id="tab-word-cluer"></div>
+    <div class="forbidden-grid" id="tab-forbidden-cluer"></div>
+    <div class="timer-wrap">
+      <div class="timer-track"><div class="timer-fill" id="timer-fill-cluer" style="width:100%"></div></div>
+      <div class="timer-label"><span>Time left</span><span id="timer-text-cluer">60s</span></div>
+    </div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn-green" onclick="markCorrect()">They got it! 🎉</button>
+      <button class="btn-ghost" onclick="skipWord()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- TABOO GUESSER -->
+<div class="screen" id="s-taboo-guesser">
+  <div class="progress-row" id="tab-progress-guesser"></div>
+  <div class="card">
+    <div class="badge badge-taboo">🎭 Guess the word!</div>
+    <div class="card-sub">Listen to the clue giver and type your guess below.</div>
+    <div class="timer-wrap">
+      <div class="timer-track"><div class="timer-fill" id="timer-fill-guesser" style="width:100%"></div></div>
+      <div class="timer-label"><span>Time left</span><span id="timer-text-guesser">60s</span></div>
+    </div>
+    <div class="guess-input-row">
+      <input type="text" id="guess-input" placeholder="Your guess…" maxlength="30" onkeydown="if(event.key==='Enter')submitGuess()"/>
+      <button onclick="submitGuess()">Go</button>
+    </div>
+    <div class="guesses-list" id="guesses-list"></div>
+  </div>
+</div>
+
+<!-- TABOO HOST -->
+<div class="screen" id="s-taboo-host">
+  <div class="progress-row" id="tab-progress-host"></div>
+  <div class="card">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.5rem">
+      <div class="badge badge-host" style="margin-bottom:0">Host</div>
+      <div class="badge badge-taboo" style="margin-bottom:0">🎭 Taboo</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:4px">THE WORD IS</div>
+    <div class="big-word" id="tab-word-host" style="font-size:32px;margin-bottom:.5rem"></div>
+    <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:4px">CLUE GIVER</div>
+    <div style="font-size:15px;font-weight:700;color:var(--yellow);margin-bottom:.75rem" id="tab-cluer-name"></div>
+    <div class="timer-wrap">
+      <div class="timer-track"><div class="timer-fill" id="timer-fill-host" style="width:100%"></div></div>
+      <div class="timer-label"><span>Time left</span><span id="timer-text-host">60s</span></div>
+    </div>
+    <div class="guesses-list" id="guesses-list-host" style="margin-top:.75rem"></div>
+    <div class="host-controls">
+      <div class="btn-row">
+        <button class="btn-green" onclick="hostMarkCorrect()">Correct! 🎉</button>
+        <button class="btn-ghost" onclick="hostSkip()">Skip</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div class="screen" id="s-edit">
+  <div class="card">
+    <div class="badge badge-edit">Edit content</div>
+    <div class="card-title">Customize the game</div>
+    <div class="card-sub">Edit below, or keep the defaults. One item per line.</div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;font-family:'Space Mono',monospace">HOT TAKES — one per line</label>
+      <textarea id="edit-hot" rows="10"></textarea>
+    </div>
+    <div style="margin-bottom:1.25rem">
+      <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;font-family:'Space Mono',monospace">TABOO WORDS — word: forbidden1, forbidden2, forbidden3</label>
+      <textarea id="edit-taboo" rows="10"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="saveEdits()">Save &amp; back</button>
+      <button class="btn-ghost" onclick="resetToDefaults()">Reset defaults</button>
+    </div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="screen" id="s-end">
+  <div class="card" style="text-align:center;padding:2rem 1.5rem">
+    <div style="font-size:52px;margin-bottom:.5rem">🏆</div>
+    <div class="card-title" style="font-size:26px">That's a wrap!</div>
+    <div class="card-sub">Great game everyone!</div>
+  </div>
+  <div class="score-grid">
+    <div class="score-box"><div class="score-num" style="color:var(--hot)" id="end-hot-count">0</div><div class="score-lbl">Hot takes</div></div>
+    <div class="score-box"><div class="score-num" style="color:var(--green)" id="end-taboo-count">0</div><div class="score-lbl">Words guessed</div></div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:.75rem;font-family:'Space Mono',monospace">TABOO LEADERBOARD</div>
+    <div class="player-scores" id="end-player-scores"></div>
+  </div>
+  <button class="btn-yellow" onclick="playAgain()">Play again! 🎉</button>
+</div>
+
+</div><!-- /app -->
+
+<div class="connection-status" id="conn-status">Not connected</div>
+<div class="notification" id="notif"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.1/peerjs.min.js"></script>
+<script>
+const DEFAULT_HOT_TAKES=[
+  "Pineapple absolutely belongs on pizza.",
+  "Summer is overrated — fall is way better.",
+  "Dogs are better pets than cats.",
+  "Breakfast is the most important meal of the day.",
+  "The book is almost always better than the movie.",
+  "Coffee is better than tea.",
+  "Texting is better than calling.",
+  "Marvel movies are better than DC movies.",
+  "Napping in the middle of the day should be totally normal.",
+  "Disney adults are a little too much.",
+  "Streaming ruined the fun of watching live TV.",
+  "Going to the movies alone is actually amazing.",
+  "TikTok is more entertaining than YouTube.",
+  "Dessert should come before dinner sometimes.",
+  "Side characters are usually more interesting than the main one.",
+  "Reality TV is genuinely good entertainment.",
+  "Board games are more fun than video games.",
+  "A road trip beats flying every time.",
+  "Leftovers always taste better the next day.",
+  "Music was better in the 90s.",
+  "Cilantro is delicious, not gross.",
+  "Airports are kind of fun if you have enough time.",
+  "Socks with sandals is actually a vibe.",
+  "Raisins in cookies are a betrayal.",
+];
+
+const DEFAULT_TABOO_CARDS=[
+  {word:"Netflix",forbidden:["streaming","show","binge","watch","movie"]},
+  {word:"Pizza",forbidden:["cheese","dough","slice","Italian","toppings"]},
+  {word:"Vacation",forbidden:["trip","travel","holiday","beach","relax"]},
+  {word:"Coffee",forbidden:["drink","espresso","morning","caffeine","latte"]},
+  {word:"Birthday",forbidden:["cake","party","candles","celebrate","age"]},
+  {word:"Selfie",forbidden:["photo","camera","phone","picture","face"]},
+  {word:"Spotify",forbidden:["music","playlist","song","stream","listen"]},
+  {word:"Brunch",forbidden:["breakfast","lunch","eggs","weekend","meal"]},
+  {word:"Emoji",forbidden:["face","text","phone","symbol","keyboard"]},
+  {word:"Hiking",forbidden:["walk","trail","nature","mountain","outdoors"]},
+  {word:"Avocado",forbidden:["toast","green","guacamole","fruit","spread"]},
+  {word:"Gym",forbidden:["workout","exercise","weights","fitness","lift"]},
+  {word:"Taylor Swift",forbidden:["singer","pop","Eras","tour","album"]},
+  {word:"Meme",forbidden:["funny","internet","joke","viral","image"]},
+  {word:"Smoothie",forbidden:["blend","fruit","drink","healthy","banana"]},
+  {word:"Podcast",forbidden:["listen","episode","audio","host","interview"]},
+  {word:"Farmer's Market",forbidden:["vegetables","fresh","outdoor","stall","local"]},
+  {word:"Password",forbidden:["login","account","secret","security","forgot"]},
+  {word:"Halloween",forbidden:["costume","candy","scary","October","trick"]},
+  {word:"Road Trip",forbidden:["drive","car","highway","travel","miles"]},
+];
+
+let HOT_TAKES=[...DEFAULT_HOT_TAKES];
+let TABOO_CARDS=[...DEFAULT_TABOO_CARDS];
+
+let peer,myId,myName,isHost=false,roomCode='';
+let connections={},hostConn=null,players={};
+let gameState={phase:'lobby',hotIdx:0,hotTakes:[],votes:{},tabooIdx:0,tabooCards:[],tabooCorrect:0,cluerPeerId:'',guesses:[],timerSec:60};
+let timerInterval=null;
+
+function launchConfetti(){
+  const canvas=document.getElementById('confetti-canvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const pieces=[];
+  const colors=['#FFD166','#FF6B6B','#06D6A0','#A78BFA','#FF79C6','#FFF'];
+  for(let i=0;i<80;i++){pieces.push({x:Math.random()*canvas.width,y:-20,r:Math.random()*8+4,color:colors[Math.floor(Math.random()*colors.length)],vx:(Math.random()-.5)*4,vy:Math.random()*3+2,rotation:Math.random()*360,spin:(Math.random()-.5)*5})}
+  let frame=0;
+  function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);pieces.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rotation*Math.PI/180);ctx.fillStyle=p.color;ctx.globalAlpha=Math.max(0,1-frame/90);ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*.6);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.rotation+=p.spin});frame++;if(frame<100)requestAnimationFrame(draw);else ctx.clearRect(0,0,canvas.width,canvas.height)}
+  draw();
+}
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+function notify(msg){const el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}
+function setStatus(msg,cls){const el=document.getElementById('conn-status');el.textContent=msg;el.className='connection-status '+(cls||'')}
+function makeProgress(id,total,cur){const el=document.getElementById(id);if(!el)return;el.innerHTML='';for(let i=0;i<total;i++){const p=document.createElement('div');p.className='pip'+(i<cur?' done':i===cur?' active':'');el.appendChild(p)}}
+function renderPlayerChips(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='';Object.entries(players).forEach(([pid,p])=>{const c=document.createElement('div');c.className='chip'+(pid===myId&&isHost?' host-chip':'');c.textContent=p.name+(pid===myId?' (you)':'');el.appendChild(c)})}
+
+function initPeer(id){
+  peer=id?new Peer(id,{debug:0}):new Peer({debug:0});
+  peer.on('open',pid=>{myId=pid;setStatus('Connected','connected');if(isHost)afterHostOpen()});
+  peer.on('connection',conn=>{if(isHost)setupHostConn(conn)});
+  peer.on('error',err=>{setStatus('Error','error');if(err.type==='unavailable-id'){notify('Room taken — try again');isHost=false;peer.destroy();show('s-join')}});
+}
+function setupHostConn(conn){conn.on('open',()=>{connections[conn.peer]=conn;conn.on('data',d=>handleHostReceive(conn.peer,d));conn.on('close',()=>{delete connections[conn.peer];delete players[conn.peer];broadcastState();renderPlayerChips('host-player-list');updateStartBtn()})})}
+function setupPlayerConn(conn){conn.on('open',()=>{hostConn=conn;setStatus('In room','connected');conn.send({type:'join',name:myName,peerId:myId});conn.on('data',d=>handlePlayerReceive(d));conn.on('close',()=>{setStatus('Disconnected','error');notify('Lost connection to host')})});conn.on('error',()=>{setStatus('Error','error');notify('Could not connect — check the code')})}
+function broadcastToAll(msg){Object.values(connections).forEach(c=>{try{c.send(msg)}catch(e){}})}
+function broadcastState(){broadcastToAll({type:'state',state:gameState,players})}
+
+function handleHostReceive(fromPeer,data){
+  if(data.type==='join'){players[fromPeer]={name:data.name,score:0};broadcastToAll({type:'state',state:gameState,players});renderPlayerChips('host-player-list');updateStartBtn();return}
+  if(data.type==='vote'){gameState.votes[fromPeer]=data.choice;const total=Object.keys(players).length-1;const cast=Object.keys(gameState.votes).length;document.getElementById('hot-votes-count').textContent=cast+' / '+total+' votes in';broadcastState();return}
+  if(data.type==='guess'){const correct=data.word.trim().toLowerCase()===gameState.tabooCards[gameState.tabooIdx].word.toLowerCase();gameState.guesses.push({peerId:fromPeer,name:players[fromPeer]?.name||'?',word:data.word,correct});if(correct){broadcastToAll({type:'notify',msg:players[fromPeer]?.name+' got it! 🎉'});launchConfetti()}broadcastState();renderHostGuesses();return}
+}
+
+function handlePlayerReceive(data){
+  if(data.type==='state'){const prev=gameState.phase;const prevIdx=gameState.hotIdx;gameState=data.state;players=data.players;syncPlayerUI(prev,prevIdx)}
+  if(data.type==='notify')notify(data.msg);
+}
+
+function createRoom(){myName=document.getElementById('name-input').value.trim();if(!myName){notify('Enter your name first!');return}isHost=true;const code=Math.random().toString(36).substring(2,8).toUpperCase();roomCode=code;initPeer('TVIBE-'+code)}
+function afterHostOpen(){players={};players[myId]={name:myName,score:0};document.getElementById('display-code').textContent=roomCode;show('s-lobby-host');renderPlayerChips('host-player-list');updateStartBtn()}
+function showJoinField(){document.getElementById('join-field').style.display='block';document.getElementById('code-input').focus()}
+function joinRoom(){myName=document.getElementById('name-input').value.trim();const code=document.getElementById('code-input').value.trim().toUpperCase().replace(/\s/g,'');if(!myName){notify('Enter your name first!');return}if(!code||code.length<4){notify('Enter a valid room code');return}isHost=false;roomCode=code;setStatus('Connecting…');initPeer();peer.on('open',()=>{const conn=peer.connect('TVIBE-'+code,{reliable:true});setupPlayerConn(conn)})}
+function updateStartBtn(){const btn=document.getElementById('start-btn');const count=Object.keys(players).length;btn.disabled=count<2;btn.textContent=count<2?'Waiting for players… ('+count+' here)':'Start game with '+count+' players 🚀'}
+
+function startGame(){
+  const pids=Object.keys(players);
+  gameState={phase:'hot',hotIdx:0,hotTakes:shuffle(HOT_TAKES).slice(0,8),votes:{},tabooIdx:0,tabooCards:shuffle(TABOO_CARDS).slice(0,6),tabooCorrect:0,cluerPeerId:pids[Math.floor(Math.random()*pids.length)],guesses:[],timerSec:60};
+  Object.keys(players).forEach(pid=>players[pid].score=0);
+  broadcastState();showHostHot();
+}
+
+function showHostHot(){show('s-hot-host');makeProgress('hot-progress-host',gameState.hotTakes.length,gameState.hotIdx);document.getElementById('hot-statement-host').textContent=gameState.hotTakes[gameState.hotIdx];const total=Object.keys(players).length-1;document.getElementById('hot-votes-count').textContent='0 / '+total+' votes in';document.getElementById('hot-results-host').style.display='none';document.getElementById('reveal-votes-btn').style.display='';document.getElementById('next-take-btn').style.display='none';gameState.votes={};broadcastState()}
+function revealVotes(){const votes=gameState.votes;const agree=Object.values(votes).filter(v=>v==='agree').length;const dis=Object.values(votes).filter(v=>v==='disagree').length;const total=agree+dis||1;document.getElementById('cnt-agree').textContent=agree;document.getElementById('cnt-dis').textContent=dis;setTimeout(()=>{document.getElementById('bar-agree').style.width=Math.round(agree/total*100)+'%';document.getElementById('bar-dis').style.width=Math.round(dis/total*100)+'%'},50);document.getElementById('hot-results-host').style.display='block';document.getElementById('reveal-votes-btn').style.display='none';document.getElementById('next-take-btn').style.display='';broadcastToAll({type:'reveal-votes',agree,dis})}
+function nextTake(){gameState.hotIdx++;if(gameState.hotIdx>=gameState.hotTakes.length)startTabooRound();else showHostHot()}
+function castVote(choice){if(!hostConn)return;document.getElementById('vote-agree-btn').disabled=true;document.getElementById('vote-dis-btn').disabled=true;document.getElementById('vote-agree-btn').className='vote-btn'+(choice==='agree'?' selected-agree':'');document.getElementById('vote-dis-btn').className='vote-btn'+(choice==='disagree'?' selected-disagree':'');document.getElementById('hot-wait-msg').style.display='block';hostConn.send({type:'vote',choice})}
+
+function startTabooRound(){gameState.phase='taboo';gameState.tabooIdx=0;gameState.tabooCorrect=0;gameState.guesses=[];broadcastState();showHostTaboo();startTimer()}
+function showHostTaboo(){show('s-taboo-host');const card=gameState.tabooCards[gameState.tabooIdx];makeProgress('tab-progress-host',gameState.tabooCards.length,gameState.tabooIdx);document.getElementById('tab-word-host').textContent=card.word;document.getElementById('guesses-list-host').innerHTML='';document.getElementById('tab-cluer-name').textContent=players[gameState.cluerPeerId]?.name||'?'}
+function startTimer(sec){clearInterval(timerInterval);let t=sec!==undefined?sec:60;gameState.timerSec=t;updateTimerUI(t);timerInterval=setInterval(()=>{t--;gameState.timerSec=t;updateTimerUI(t);broadcastState();if(t<=0){clearInterval(timerInterval);endTabooCard(false)}},1000)}
+function updateTimerUI(t){const pct=Math.max(0,t/60*100)+'%';const warn=t<=15;['cluer','guesser','host'].forEach(role=>{const fill=document.getElementById('timer-fill-'+role);const txt=document.getElementById('timer-text-'+role);if(fill){fill.style.width=pct;fill.className='timer-fill'+(warn?' warning':'')}if(txt)txt.textContent=t+'s'})}
+function markCorrect(){if(!hostConn){hostMarkCorrect();return}hostConn.send({type:'mark-correct'})}
+function skipWord(){if(!hostConn){hostSkip();return}hostConn.send({type:'skip'})}
+function hostMarkCorrect(){clearInterval(timerInterval);gameState.tabooCorrect++;if(players[gameState.cluerPeerId])players[gameState.cluerPeerId].score++;launchConfetti();endTabooCard(true)}
+function hostSkip(){clearInterval(timerInterval);endTabooCard(false)}
+function endTabooCard(correct){broadcastToAll({type:'notify',msg:correct?'🎉 Got it!':'Moving on!'});gameState.tabooIdx++;gameState.guesses=[];if(gameState.tabooIdx>=gameState.tabooCards.length)endGame();else{nextCluer();broadcastState();showHostTaboo();startTimer(60)}}
+function nextCluer(){const pids=Object.keys(players);const cur=pids.indexOf(gameState.cluerPeerId);gameState.cluerPeerId=pids[(cur+1)%pids.length]}
+function submitGuess(){const inp=document.getElementById('guess-input');const word=inp.value.trim();if(!word||!hostConn)return;inp.value='';hostConn.send({type:'guess',word})}
+function renderHostGuesses(){const el=document.getElementById('guesses-list-host');if(!el)return;el.innerHTML='';gameState.guesses.slice(-6).forEach(g=>{const div=document.createElement('div');div.className='guess-item'+(g.correct?' correct':'');div.innerHTML='<span class="gword">'+g.word+'</span><span class="gname">'+g.name+'</span>';el.appendChild(div)})}
+function renderGuesserList(){const el=document.getElementById('guesses-list');if(!el)return;el.innerHTML='';gameState.guesses.slice(-6).forEach(g=>{const div=document.createElement('div');div.className='guess-item'+(g.correct?' correct':'');div.innerHTML='<span class="gword">'+g.word+'</span><span class="gname">'+g.name+'</span>';el.appendChild(div)})}
+
+function endGame(){clearInterval(timerInterval);gameState.phase='end';broadcastState();showEnd()}
+function showEnd(){show('s-end');launchConfetti();document.getElementById('end-hot-count').textContent=gameState.hotTakes.length;document.getElementById('end-taboo-count').textContent=gameState.tabooCorrect;const sorted=Object.entries(players).sort((a,b)=>b[1].score-a[1].score);const el=document.getElementById('end-player-scores');el.innerHTML='';sorted.forEach(([pid,p],i)=>{const row=document.createElement('div');row.className='ps-row'+(i===0?' top':'');row.innerHTML='<span class="ps-name">'+p.name+(i===0?' 🏆':'')+'</span><span class="ps-pts">'+p.score+' pts</span>';el.appendChild(row)})}
+function playAgain(){if(isHost)startGame();else notify('Waiting for host to restart…')}
+
+function syncPlayerUI(prevPhase,prevHotIdx){
+  const gs=gameState;const amCluer=gs.cluerPeerId===myId;
+  if(gs.phase==='lobby'){document.getElementById('player-room-title').textContent='Room '+roomCode;renderPlayerChips('player-player-list');show('s-lobby-player');return}
+  if(gs.phase==='hot'){makeProgress('hot-progress-player',gs.hotTakes.length,gs.hotIdx);document.getElementById('hot-statement-player').textContent=gs.hotTakes[gs.hotIdx];if(gs.hotIdx!==prevHotIdx)resetVoteUI();show('s-hot-player');return}
+  if(gs.phase==='taboo'){updateTimerUI(gs.timerSec);if(amCluer){const card=gs.tabooCards[gs.tabooIdx];makeProgress('tab-progress-cluer',gs.tabooCards.length,gs.tabooIdx);document.getElementById('tab-word-cluer').textContent=card.word;const fg=document.getElementById('tab-forbidden-cluer');fg.innerHTML='';card.forbidden.forEach(w=>{const pill=document.createElement('div');pill.className='forbidden-pill';pill.textContent=w;fg.appendChild(pill)});show('s-taboo-cluer')}else{makeProgress('tab-progress-guesser',gs.tabooCards.length,gs.tabooIdx);renderGuesserList();show('s-taboo-guesser')}return}
+  if(gs.phase==='end'){showEnd();return}
+}
+function resetVoteUI(){document.getElementById('vote-agree-btn').disabled=false;document.getElementById('vote-dis-btn').disabled=false;document.getElementById('vote-agree-btn').className='vote-btn';document.getElementById('vote-dis-btn').className='vote-btn';document.getElementById('hot-wait-msg').style.display='none'}
+
+function openEdit(){document.getElementById('edit-hot').value=HOT_TAKES.join('\n');document.getElementById('edit-taboo').value=TABOO_CARDS.map(c=>c.word+': '+c.forbidden.join(', ')).join('\n');show('s-edit')}
+function saveEdits(){const newHot=document.getElementById('edit-hot').value.split('\n').map(l=>l.trim()).filter(l=>l.length>0);const newTaboo=document.getElementById('edit-taboo').value.split('\n').map(l=>l.trim()).filter(l=>l.includes(':')).map(l=>{const[w,f]=l.split(':');return{word:w.trim(),forbidden:(f||'').split(',').map(x=>x.trim()).filter(x=>x)}}).filter(c=>c.word&&c.forbidden.length>0);if(newHot.length<3){notify('Add at least 3 hot takes');return}if(newTaboo.length<3){notify('Add at least 3 taboo words');return}HOT_TAKES=newHot;TABOO_CARDS=newTaboo;notify('Saved! ✅');show('s-lobby-host')}
+function resetToDefaults(){HOT_TAKES=[...DEFAULT_HOT_TAKES];TABOO_CARDS=[...DEFAULT_TABOO_CARDS];document.getElementById('edit-hot').value=HOT_TAKES.join('\n');document.getElementById('edit-taboo').value=TABOO_CARDS.map(c=>c.word+': '+c.forbidden.join(', ')).join('\n');notify('Reset to defaults')}
+
+document.getElementById('name-input').focus();
+</script>
+</body>
+</html>
