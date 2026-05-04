@@ -114,8 +114,8 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .bar-dis{background:linear-gradient(90deg,#FF4757,var(--hot))}
 .result-count{font-size:20px;font-weight:800;width:36px;text-align:right;flex-shrink:0}
 .result-summary{text-align:center;font-size:15px;color:var(--muted);margin-top:.5rem;font-style:italic}
-.live-poll-title{text-align:center;font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin:1.1rem 0 .6rem}
-.live-poll-sub{text-align:center;font-size:13px;color:var(--muted);margin-top:-.25rem;margin-bottom:.75rem;font-style:italic}
+.live-results-title{font-size:12px;font-weight:700;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.75rem;text-align:center}
+.live-results-note{text-align:center;font-size:13px;color:var(--muted);font-style:italic;margin-top:-.35rem}
 .host-controls{border-top:1px solid var(--border);padding-top:1.25rem;margin-top:1.25rem}
 
 /* End */
@@ -246,20 +246,20 @@ button:disabled{opacity:.35;cursor:not-allowed}
     </div>
     <div class="wait-msg" id="hot-wait-msg" style="display:none">✅ Vote locked in! Watching the room split…</div>
     <div id="hot-live-player" style="display:none">
-      <div class="live-poll-title" id="hot-live-title-player">Live results</div>
-      <div class="live-poll-sub">Anonymous voting updates as people lock in.</div>
+      <div class="live-results-title">Live vote</div>
       <div class="result-bars">
         <div class="result-row">
           <div class="result-emoji">👍</div>
-          <div class="bar-track"><div class="bar-fill bar-agree" id="bar-agree-player" style="width:0%"></div></div>
-          <div class="result-count" style="color:var(--green)" id="cnt-agree-player">0</div>
+          <div class="bar-track"><div class="bar-fill bar-agree" id="player-bar-agree" style="width:0%"></div></div>
+          <div class="result-count" style="color:var(--green)" id="player-cnt-agree">0</div>
         </div>
         <div class="result-row">
           <div class="result-emoji">👎</div>
-          <div class="bar-track"><div class="bar-fill bar-dis" id="bar-dis-player" style="width:0%"></div></div>
-          <div class="result-count" style="color:var(--hot)" id="cnt-dis-player">0</div>
+          <div class="bar-track"><div class="bar-fill bar-dis" id="player-bar-dis" style="width:0%"></div></div>
+          <div class="result-count" style="color:var(--hot)" id="player-cnt-dis">0</div>
         </div>
       </div>
+      <div class="live-results-note" id="player-live-note">Waiting for more votes…</div>
     </div>
   </div>
 </div>
@@ -421,6 +421,7 @@ let HOT_TAKES = [...DEFAULT_HOT_TAKES];
 let peer,myId,myName,isHost=false,roomCode='';
 let connections={},hostConn=null,players={};
 let selectedRole=null;
+let localVote=null;
 let gameState={phase:'lobby',hotIdx:0,hotTakes:[],votes:{},results:[]};
 
 // ─── CONFETTI ─────────────────────────────────────────────────────────────────
@@ -467,7 +468,7 @@ function broadcastState(){broadcastToAll({type:'state',state:gameState,players})
 
 function handleHostReceive(fromPeer,data){
   if(data.type==='join'){players[fromPeer]={name:data.name};broadcastToAll({type:'state',state:gameState,players});renderPlayerChips('host-player-list');updateStartBtn();return}
-  if(data.type==='vote'){gameState.votes[fromPeer]=data.choice;const total=Object.keys(players).length-1;const cast=Object.keys(gameState.votes).length;const pct=total?Math.round(cast/total*100):0;const el=document.getElementById('hot-votes-count');if(el)el.textContent=cast+' / '+total+' votes in ('+pct+'%)';broadcastState();return}
+  if(data.type==='vote'){gameState.votes[fromPeer]=data.choice;const total=Object.keys(players).length-1;const cast=Object.keys(gameState.votes).length;const el=document.getElementById('hot-votes-count');if(el)el.textContent=cast+' / '+total+' votes in';broadcastState();return}
 }
 function handlePlayerReceive(data){
   if(data.type==='state'){const prevIdx=gameState.hotIdx;gameState=data.state;players=data.players;syncPlayerUI(prevIdx)}
@@ -520,11 +521,12 @@ function revealVotes(){
   const agree=Object.values(votes).filter(v=>v==='agree').length;
   const dis=Object.values(votes).filter(v=>v==='disagree').length;
   const total=agree+dis||1;
-  const pct=Math.round(agree/total*100);
-  const disPct=100-pct;
-  document.getElementById('cnt-agree').textContent=agree+' ('+pct+'%)';
+  const agreePct=Math.round(agree/total*100);
+  const disPct=Math.round(dis/total*100);
+  document.getElementById('cnt-agree').textContent=agree+' ('+agreePct+'%)';
   document.getElementById('cnt-dis').textContent=dis+' ('+disPct+'%)';
-  setTimeout(()=>{document.getElementById('bar-agree').style.width=pct+'%';document.getElementById('bar-dis').style.width=disPct+'%'},50);
+  setTimeout(()=>{document.getElementById('bar-agree').style.width=Math.round(agree/total*100)+'%';document.getElementById('bar-dis').style.width=Math.round(dis/total*100)+'%'},50);
+  const pct=Math.round(agree/total*100);
   let summary='';
   if(pct===100)summary='Unanimous! Everyone agrees 🤝';
   else if(pct===0)summary='Unanimous! Everyone disagrees 😤';
@@ -542,15 +544,43 @@ function revealVotes(){
   broadcastToAll({type:'notify',msg:summary});
 }
 function nextTake(){gameState.hotIdx++;if(gameState.hotIdx>=gameState.hotTakes.length)endGame();else showHostHot()}
+
+function renderPlayerLiveResults(){
+  const live=document.getElementById('hot-live-player');
+  if(!live)return;
+  if(!localVote){
+    live.style.display='none';
+    return;
+  }
+  const votes=gameState.votes||{};
+  const agree=Object.values(votes).filter(v=>v==='agree').length;
+  const dis=Object.values(votes).filter(v=>v==='disagree').length;
+  const voted=agree+dis;
+  const total=Math.max(Object.keys(players).length-1, voted, 1);
+  const agreePct=voted?Math.round(agree/voted*100):0;
+  const disPct=voted?Math.round(dis/voted*100):0;
+  live.style.display='block';
+  document.getElementById('player-cnt-agree').textContent=agree+' ('+agreePct+'%)';
+  document.getElementById('player-cnt-dis').textContent=dis+' ('+disPct+'%)';
+  setTimeout(()=>{
+    const agreeBar=document.getElementById('player-bar-agree');
+    const disBar=document.getElementById('player-bar-dis');
+    if(agreeBar)agreeBar.style.width=agreePct+'%';
+    if(disBar)disBar.style.width=disPct+'%';
+  },50);
+  const note=document.getElementById('player-live-note');
+  if(note)note.textContent=voted+' / '+total+' votes in';
+}
+
 function castVote(choice){
   if(!hostConn)return;
   document.getElementById('vote-agree-btn').disabled=true;
   document.getElementById('vote-dis-btn').disabled=true;
   document.getElementById('vote-agree-btn').className='vote-btn'+(choice==='agree'?' selected-agree':'');
   document.getElementById('vote-dis-btn').className='vote-btn'+(choice==='disagree'?' selected-disagree':'');
+  localVote=choice;
   document.getElementById('hot-wait-msg').style.display='block';
-  document.getElementById('hot-live-player').style.display='block';
-  updatePlayerLiveResults();
+  renderPlayerLiveResults();
   hostConn.send({type:'vote',choice});
 }
 
@@ -569,32 +599,14 @@ function showEnd(){
 }
 function playAgain(){if(isHost)startGame();else notify('Waiting for host to restart…')}
 
-function updatePlayerLiveResults(){
-  const live=document.getElementById('hot-live-player');
-  if(!live)return;
-  const votes=gameState.votes||{};
-  const agree=Object.values(votes).filter(v=>v==='agree').length;
-  const dis=Object.values(votes).filter(v=>v==='disagree').length;
-  const cast=agree+dis;
-  const totalPlayers=Math.max(Object.keys(players).length-1,cast,1);
-  const denom=cast||1;
-  const agreePct=Math.round(agree/denom*100);
-  const disPct=cast?100-agreePct:0;
-  const title=document.getElementById('hot-live-title-player');
-  if(title)title.textContent='Live results · '+cast+' / '+totalPlayers+' votes in';
-  document.getElementById('cnt-agree-player').textContent=agree+' ('+agreePct+'%)';
-  document.getElementById('cnt-dis-player').textContent=dis+' ('+disPct+'%)';
-  setTimeout(()=>{document.getElementById('bar-agree-player').style.width=agreePct+'%';document.getElementById('bar-dis-player').style.width=disPct+'%'},50);
-}
-
 // ─── PLAYER SYNC ──────────────────────────────────────────────────────────────
 function syncPlayerUI(prevHotIdx){
   const gs=gameState;
   if(gs.phase==='lobby'){document.getElementById('player-room-title').textContent='Room '+roomCode;renderPlayerChips('player-player-list');show('s-lobby-player');return}
-  if(gs.phase==='hot'){const take=gs.hotTakes[gs.hotIdx];makeProgress('hot-progress-player','hot-progress-label-player',gs.hotTakes.length,gs.hotIdx);const catEl=document.getElementById('hot-cat-player');if(catEl)catEl.textContent=take.cat||'';document.getElementById('hot-statement-player').textContent=take.text;if(gs.hotIdx!==prevHotIdx)resetVoteUI();if((gs.votes||{})[myId]){document.getElementById('hot-live-player').style.display='block';updatePlayerLiveResults()}show('s-hot-player');return}
+  if(gs.phase==='hot'){const take=gs.hotTakes[gs.hotIdx];makeProgress('hot-progress-player','hot-progress-label-player',gs.hotTakes.length,gs.hotIdx);const catEl=document.getElementById('hot-cat-player');if(catEl)catEl.textContent=take.cat||'';document.getElementById('hot-statement-player').textContent=take.text;if(gs.hotIdx!==prevHotIdx)resetVoteUI();renderPlayerLiveResults();show('s-hot-player');return}
   if(gs.phase==='end'){showEnd();return}
 }
-function resetVoteUI(){document.getElementById('vote-agree-btn').disabled=false;document.getElementById('vote-dis-btn').disabled=false;document.getElementById('vote-agree-btn').className='vote-btn';document.getElementById('vote-dis-btn').className='vote-btn';document.getElementById('hot-wait-msg').style.display='none';document.getElementById('hot-live-player').style.display='none';document.getElementById('bar-agree-player').style.width='0%';document.getElementById('bar-dis-player').style.width='0%';document.getElementById('cnt-agree-player').textContent='0';document.getElementById('cnt-dis-player').textContent='0'}
+function resetVoteUI(){localVote=null;document.getElementById('vote-agree-btn').disabled=false;document.getElementById('vote-dis-btn').disabled=false;document.getElementById('vote-agree-btn').className='vote-btn';document.getElementById('vote-dis-btn').className='vote-btn';document.getElementById('hot-wait-msg').style.display='none';const live=document.getElementById('hot-live-player');if(live)live.style.display='none';const a=document.getElementById('player-bar-agree');const d=document.getElementById('player-bar-dis');if(a)a.style.width='0%';if(d)d.style.width='0%'}
 
 // ─── EDIT ─────────────────────────────────────────────────────────────────────
 function openEdit(){document.getElementById('edit-hot').value=HOT_TAKES.map(h=>h.text).join('\n');show('s-edit')}
