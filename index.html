@@ -114,6 +114,10 @@ button:disabled{opacity:.35;cursor:not-allowed}
 .bar-dis{background:linear-gradient(90deg,#FF4757,var(--hot))}
 .result-count{font-size:20px;font-weight:800;width:36px;text-align:right;flex-shrink:0}
 .result-summary{text-align:center;font-size:15px;color:var(--muted);margin-top:.5rem;font-style:italic}
+.live-results{margin-top:1.25rem;padding:1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm)}
+.live-results-title{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem;text-align:center}
+.live-results .bar-track{background:var(--surface)}
+.live-results .result-count{font-size:16px;width:58px}
 .host-controls{border-top:1px solid var(--border);padding-top:1.25rem;margin-top:1.25rem}
 
 /* End */
@@ -242,7 +246,23 @@ button:disabled{opacity:.35;cursor:not-allowed}
       <button class="vote-btn" id="vote-agree-btn" onclick="castVote('agree')">👍<span>Agree</span></button>
       <button class="vote-btn" id="vote-dis-btn" onclick="castVote('disagree')">👎<span>Disagree</span></button>
     </div>
-    <div class="wait-msg" id="hot-wait-msg" style="display:none">✅ Vote locked in! Waiting for the host to reveal…</div>
+    <div class="wait-msg" id="hot-wait-msg" style="display:none">✅ Vote locked in! Watching the room split…</div>
+    <div class="live-results" id="hot-live-results-player" style="display:none">
+      <div class="live-results-title">Live room vote</div>
+      <div class="result-bars">
+        <div class="result-row">
+          <div class="result-emoji">👍</div>
+          <div class="bar-track"><div class="bar-fill bar-agree" id="bar-agree-player" style="width:0%"></div></div>
+          <div class="result-count" style="color:var(--green)" id="cnt-agree-player">0%</div>
+        </div>
+        <div class="result-row" style="margin-bottom:0">
+          <div class="result-emoji">👎</div>
+          <div class="bar-track"><div class="bar-fill bar-dis" id="bar-dis-player" style="width:0%"></div></div>
+          <div class="result-count" style="color:var(--hot)" id="cnt-dis-player">0%</div>
+        </div>
+      </div>
+      <div class="result-summary" id="live-result-summary-player">Vote to see live results.</div>
+    </div>
   </div>
 </div>
 
@@ -422,6 +442,8 @@ function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.re
 function notify(msg){const el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500)}
 function setStatus(msg,cls){const el=document.getElementById('conn-status');el.textContent=msg;el.className='connection-status '+(cls||'')}
 function makeProgress(rowId,labelId,total,cur){const el=document.getElementById(rowId);if(!el)return;el.innerHTML='';for(let i=0;i<total;i++){const p=document.createElement('div');p.className='pip'+(i<cur?' done':i===cur?' active':'');el.appendChild(p)}const lbl=document.getElementById(labelId);if(lbl)lbl.textContent=(cur+1)+' of '+total}
+function getVoteStats(){const votes=gameState.votes||{};const agree=Object.values(votes).filter(v=>v==='agree').length;const dis=Object.values(votes).filter(v=>v==='disagree').length;const total=agree+dis;const agreePct=total?Math.round(agree/total*100):0;const disPct=total?100-agreePct:0;return{agree,dis,total,agreePct,disPct}}
+function updatePlayerLiveResults(showResults){const box=document.getElementById('hot-live-results-player');if(!box)return;if(showResults)box.style.display='block';const stats=getVoteStats();const ba=document.getElementById('bar-agree-player'),bd=document.getElementById('bar-dis-player'),ca=document.getElementById('cnt-agree-player'),cd=document.getElementById('cnt-dis-player'),sum=document.getElementById('live-result-summary-player');if(ba)ba.style.width=stats.agreePct+'%';if(bd)bd.style.width=stats.disPct+'%';if(ca)ca.textContent=stats.agree+' / '+stats.agreePct+'%';if(cd)cd.textContent=stats.dis+' / '+stats.disPct+'%';if(sum)sum.textContent=stats.total?stats.total+' vote'+(stats.total===1?'':'s')+' in so far':'Vote to see live results.'}
 function renderPlayerChips(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='';Object.entries(players).forEach(([pid,p])=>{const c=document.createElement('div');c.className='chip'+(pid===myId&&isHost?' host-chip':'');c.textContent=p.name+(pid===myId?' (you)':'');el.appendChild(c)})}
 
 // ─── ROLE SELECTION ───────────────────────────────────────────────────────────
@@ -449,7 +471,7 @@ function broadcastState(){broadcastToAll({type:'state',state:gameState,players})
 
 function handleHostReceive(fromPeer,data){
   if(data.type==='join'){players[fromPeer]={name:data.name};broadcastToAll({type:'state',state:gameState,players});renderPlayerChips('host-player-list');updateStartBtn();return}
-  if(data.type==='vote'){gameState.votes[fromPeer]=data.choice;const total=Object.keys(players).length-1;const cast=Object.keys(gameState.votes).length;const el=document.getElementById('hot-votes-count');if(el)el.textContent=cast+' / '+total+' votes in';broadcastState();return}
+  if(data.type==='vote'){gameState.votes[fromPeer]=data.choice;const total=Object.keys(players).length-1;const cast=Object.keys(gameState.votes).length;const pct=total?Math.round(cast/total*100):0;const el=document.getElementById('hot-votes-count');if(el)el.textContent=cast+' / '+total+' votes in ('+pct+'%)';broadcastState();return}
 }
 function handlePlayerReceive(data){
   if(data.type==='state'){const prevIdx=gameState.hotIdx;gameState=data.state;players=data.players;syncPlayerUI(prevIdx)}
@@ -502,10 +524,11 @@ function revealVotes(){
   const agree=Object.values(votes).filter(v=>v==='agree').length;
   const dis=Object.values(votes).filter(v=>v==='disagree').length;
   const total=agree+dis||1;
-  document.getElementById('cnt-agree').textContent=agree;
-  document.getElementById('cnt-dis').textContent=dis;
-  setTimeout(()=>{document.getElementById('bar-agree').style.width=Math.round(agree/total*100)+'%';document.getElementById('bar-dis').style.width=Math.round(dis/total*100)+'%'},50);
   const pct=Math.round(agree/total*100);
+  const disPct=100-pct;
+  document.getElementById('cnt-agree').textContent=agree+' / '+pct+'%';
+  document.getElementById('cnt-dis').textContent=dis+' / '+disPct+'%';
+  setTimeout(()=>{document.getElementById('bar-agree').style.width=pct+'%';document.getElementById('bar-dis').style.width=disPct+'%'},50);
   let summary='';
   if(pct===100)summary='Unanimous! Everyone agrees 🤝';
   else if(pct===0)summary='Unanimous! Everyone disagrees 😤';
@@ -531,6 +554,9 @@ function castVote(choice){
   document.getElementById('vote-dis-btn').className='vote-btn'+(choice==='disagree'?' selected-disagree':'');
   document.getElementById('hot-wait-msg').style.display='block';
   hostConn.send({type:'vote',choice});
+  gameState.votes=gameState.votes||{};
+  gameState.votes[myId]=choice;
+  updatePlayerLiveResults(true);
 }
 
 // ─── END ──────────────────────────────────────────────────────────────────────
@@ -552,10 +578,10 @@ function playAgain(){if(isHost)startGame();else notify('Waiting for host to rest
 function syncPlayerUI(prevHotIdx){
   const gs=gameState;
   if(gs.phase==='lobby'){document.getElementById('player-room-title').textContent='Room '+roomCode;renderPlayerChips('player-player-list');show('s-lobby-player');return}
-  if(gs.phase==='hot'){const take=gs.hotTakes[gs.hotIdx];makeProgress('hot-progress-player','hot-progress-label-player',gs.hotTakes.length,gs.hotIdx);const catEl=document.getElementById('hot-cat-player');if(catEl)catEl.textContent=take.cat||'';document.getElementById('hot-statement-player').textContent=take.text;if(gs.hotIdx!==prevHotIdx)resetVoteUI();show('s-hot-player');return}
+  if(gs.phase==='hot'){const take=gs.hotTakes[gs.hotIdx];makeProgress('hot-progress-player','hot-progress-label-player',gs.hotTakes.length,gs.hotIdx);const catEl=document.getElementById('hot-cat-player');if(catEl)catEl.textContent=take.cat||'';document.getElementById('hot-statement-player').textContent=take.text;if(gs.hotIdx!==prevHotIdx)resetVoteUI();const alreadyVoted=!!(gs.votes&&gs.votes[myId]);updatePlayerLiveResults(alreadyVoted);show('s-hot-player');return}
   if(gs.phase==='end'){showEnd();return}
 }
-function resetVoteUI(){document.getElementById('vote-agree-btn').disabled=false;document.getElementById('vote-dis-btn').disabled=false;document.getElementById('vote-agree-btn').className='vote-btn';document.getElementById('vote-dis-btn').className='vote-btn';document.getElementById('hot-wait-msg').style.display='none'}
+function resetVoteUI(){document.getElementById('vote-agree-btn').disabled=false;document.getElementById('vote-dis-btn').disabled=false;document.getElementById('vote-agree-btn').className='vote-btn';document.getElementById('vote-dis-btn').className='vote-btn';document.getElementById('hot-wait-msg').style.display='none';const live=document.getElementById('hot-live-results-player');if(live)live.style.display='none';updatePlayerLiveResults(false)}
 
 // ─── EDIT ─────────────────────────────────────────────────────────────────────
 function openEdit(){document.getElementById('edit-hot').value=HOT_TAKES.map(h=>h.text).join('\n');show('s-edit')}
